@@ -56,27 +56,47 @@ def getPixelXY(file_name):
 # 2. Add a state machine and move it to BRUSH_DIPPING state when this is happening
 
 def dipBrushIntoWater(fa : FrankaArm):
+    
+    # Certain notes about this manuver - 
+    # It has to be fast and intermediate motions should be minimal otherwise drawing will evaporate.
 
-    water_tray_location = ([np.asarray([0.52413815, -0.05815484, 0.10330608]), 
-    np.asarray([[ 0.90974968,  0.05315474,  0.4117209 ],[0.08631803, -0.99430419, -0.0623634 ],[ 0.40606091,  0.09227402, -0.90917364]])
-    ])
+    # This is point is the center of the water tray at the top surface
+    # It is assumed that the x and y axis of the box and the robot base are alligned
+
+    prev_pose = fa.get_pose()
+
+    dip_height = 0.01 # 1cm
+    water_tray_location = ([np.asarray([0.52413815, # x
+                                        -0.05815484, # y 
+                                        0.10330608]), # z
+    
+                        # Zrot = rotation about (reset) initial pose z axis
+                        # TODO test this rotation without any translation
+                        np.asarray([[ 1,  0,  0 ],
+                                    [ 0, -1,  0 ],
+                                    [ 0,  0, -1]])
+                            ])
+
+    water_tray_dims = np.asarray([0.09241, # width 92.41 mm
+                           0.134, # length 134mm
+                           0.0353]) # height 35.3
     
     # 0. Stop whatever was happening before 
     fa.stop_skill()
 
     # 1. Move franka arm to the water tray
     fa.goto_pose(RigidTransform(rotation = water_tray_location[1], 
-                                translation = water_tray_location[0], 
+                                translation = water_tray_location[0] + np.asarray([0, 0, -dip_height]),
                                 from_frame='franka_tool', 
                                 to_frame='world'), 
-                                duration = 5)
+                duration = 5)
 
     # 2. Dip the brush into the water at a tilt and translate in the x direction
     fa.goto_pose(RigidTransform(rotation = water_tray_location[1], 
-                                translation = water_tray_location[0], 
+                                translation = water_tray_location[0] + np.asarray([water_tray_dims[0], water_tray_dims[1], dip_height]),
                                 from_frame='franka_tool', 
                                 to_frame='world'), 
-                                duration = 5)
+                duration = 5)
 
     # 3. Rotate 360 degrees about z axis 
 
@@ -85,18 +105,15 @@ def dipBrushIntoWater(fa : FrankaArm):
 
     # TODO enable the publisher API by making last goto pose the following command
 
-    # fa.goto_pose(pose_traj[0], duration = 5)
-    # fa.goto_pose((pose_traj[1]), 
-    #              duration=int(ts[-1]), 
-    #              dynamic=True, 
-    #              buffer_time=10, 
-    #              cartesian_impedances=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0]
-    # )
+    
+    fa.goto_pose(prev_pose, 
+                 duration=int(ts[-1]), 
+                 dynamic=True, 
+                 buffer_time=10, 
+                 cartesian_impedances=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0]
+    )
 
     # Move the state machine state to whatever was happening before this
-
-
-
 
 if __name__ == "__main__":
     
@@ -139,6 +156,9 @@ if __name__ == "__main__":
   
     # Store the initial pose
     init = np.array([x_ini, y_ini, z_ini])
+
+    dipBrushIntoWater(fa)
+    pass
 
     # From a local file load the timestamps and the offsets
     p = getPixelXY('apple.pkl')
