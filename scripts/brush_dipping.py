@@ -55,7 +55,7 @@ def getPixelXY(file_name):
 # 1. add this function inside a timer callback
 # 2. Add a state machine and move it to BRUSH_DIPPING state when this is happening
 
-def dipBrushIntoWater(fa : FrankaArm):
+def dipBrushIntoWater(fa : FrankaArm, ts):
     
     # Certain notes about this manuver - 
     # It has to be fast and intermediate motions should be minimal otherwise drawing will evaporate.
@@ -63,14 +63,11 @@ def dipBrushIntoWater(fa : FrankaArm):
     # This is point is the center of the water tray at the top surface
     # It is assumed that the x and y axis of the box and the robot base are alligned
 
-    prev_pose = fa.get_pose()
-
-    dip_height = 0.01 # 1cm
-
+    dip_height = 0.025 # 1.5cm
     # TODO find out this coordinate
-    water_tray_location = ([np.asarray([0.52413815, # x
-                                        -0.05815484, # y 
-                                        0.10330608]), # z
+    water_tray_location = ([np.asarray([0.7, # x
+                                        0.445, # y 
+                                        0.14]), # z
     
                         # Zrot = rotation about (reset) initial pose z axis
                         # TODO test this rotation without any translation
@@ -78,9 +75,9 @@ def dipBrushIntoWater(fa : FrankaArm):
                                     [ 0, -1,  0 ],
                                     [ 0,  0, -1]])
                             ])
-
-    water_tray_dims = np.asarray([0.09241, # width 92.41 mm
-                           0.134, # length 134mm
+    
+    water_tray_dims = np.asarray([0.134, # length 134mm
+                           0.09241, # width 92.41 mm
                            0.0353]) # height 35.3
     
     # 0. Stop whatever was happening before 
@@ -88,35 +85,42 @@ def dipBrushIntoWater(fa : FrankaArm):
 
     poses = []
 
+    rotation = RigidTransform.x_axis_rotation( 20 * np.pi / 180)
+    rotation = rotation @ RigidTransform.y_axis_rotation( -20 * np.pi / 180)
+
     # 1. Move franka arm to the water tray
     poses.append(RigidTransform(rotation = water_tray_location[1], 
-                                translation = water_tray_location[0] + np.asarray([0, 0, -dip_height]),
+                                translation = water_tray_location[0] + np.asarray([0, 0, dip_height]),
                                 from_frame='franka_tool', 
                                 to_frame='world'))
-
-    # 2. Dip the brush into the water at a tilt and translate in the x direction
-    poses.append(RigidTransform(rotation = water_tray_location[1], 
-                                translation = water_tray_location[0] + np.asarray([water_tray_dims[0], water_tray_dims[1], dip_height]),
-                                from_frame='franka_tool', 
-                                to_frame='world'))
-    for pose in poses:
-        fa.goto_pose(pose)
-        
-
     
 
+    poses.append(RigidTransform(rotation = water_tray_location[1], 
+                            translation = water_tray_location[0] + np.asarray([0, 0, -dip_height]),
+                            from_frame='franka_tool', 
+                            to_frame='world'))
+
+    # 2. Dip the brush into the water at a tilt and translate in the x direction
+    poses.append(RigidTransform(rotation = water_tray_location[1] @ RigidTransform.z_axis_rotation(np.pi), 
+                                translation = water_tray_location[0] + np.asarray([- water_tray_dims[0], - water_tray_dims[1], 0.00]),
+                                from_frame='franka_tool', 
+                                to_frame='world'))
+
+    for pose in poses:
+        fa.goto_pose(pose, duration = 5)
 
     # 3. Rotate 360 degrees about z axis 
 
     # 4. Move out of the water tray with brush touching the wall - (stretch goal)
     
     # TODO enable the publisher API by making last goto pose the following command
-    fa.goto_pose(prev_pose, 
-                 duration=int(ts[-1]), 
-                 dynamic=True, 
-                 buffer_time=10, 
-                 cartesian_impedances=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0]
-    )
+    fa.reset_joints()
+    # fa.goto_pose(prev_pose, 
+    #              duration=5, 
+    #              dynamic=True, 
+    #              buffer_time=10, 
+    #              cartesian_impedances=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0]
+    # )
 
     # Move the state machine state to whatever was happening before this
 
@@ -142,9 +146,7 @@ if __name__ == "__main__":
    
     x_ini = 0.15
     y_ini = -0.05
-    # z_ini = 0.375
-    # z_ini = 0.3625 
-    z_ini = 0.3
+    z_ini = 0.375
     x_factor = 0.1
     y_factor = 0.1
     
@@ -161,20 +163,23 @@ if __name__ == "__main__":
     p1 = p0.copy()
   
 
-    print(p1)
+    # print(p1)
+    dt = 0.02
+    trajectory_duration = 30
+    # This param determines the speed with which the robot will complete the trajectory
+    ts = np.arange(0, trajectory_duration, dt)
     
-    pass
-    #---------------------------------------------------
+    # #---------------------------------------------------
 
-    # Store the initial pose
+    # # Store the initial pose
     init = np.array([x_ini, y_ini, z_ini])
 
-    dipBrushIntoWater(fa)
-    fa.reset_joints()
+    dipBrushIntoWater(fa, ts)
+    # fa.reset_joints()
 
-    pass
+    # pass
 
-    #---------------------------------------------------
+    # #---------------------------------------------------
 
     # From a local file load the timestamps and the offsets
     p = getPixelXY('apple.pkl')
@@ -195,10 +200,7 @@ if __name__ == "__main__":
     
     init_time = rospy.Time.now().to_time()
     pose_traj = np.array(pose_traj)
-    dt = 0.02
-    trajectory_duration = 30
-    # This param determines the speed with which the robot will complete the trajectory
-    ts = np.arange(0, trajectory_duration, dt)
+
     
     # Go to an initial pose - this is required to initialiize the set topic by pose API
     fa.goto_pose(pose_traj[0], duration = 5)
@@ -254,7 +256,7 @@ if __name__ == "__main__":
 
         # TODO figure out a better way to compute Z - rather than trial and error to find correct Z offset
         # Append the Z offset to so that the brush touches the board.
-        translation.append(pose_traj[0].translation[2])
+        translation.append(pose_traj[0].translation[2] - 0.0135)
         
         # Publish the pose on the ros topic
         # print(fa.get_pose().translation)
@@ -284,3 +286,4 @@ if __name__ == "__main__":
         pub.publish(ros_msg)
         time.sleep(dt)
 
+    fa.reset_joints()
