@@ -30,7 +30,7 @@ def getPixelXY(file_name):
     with open(os.path.join(data_dir, file_name), 'rb') as f:
         path = pickle.load(f)
 
-    sf = 0.1
+    # sf = 0.1
     print(len(path))
     deltas = []
     # deltas.append(np.array([0, 0, 0]))
@@ -66,6 +66,8 @@ def dipBrushIntoWater(fa : FrankaArm):
     prev_pose = fa.get_pose()
 
     dip_height = 0.01 # 1cm
+
+    # TODO find out this coordinate
     water_tray_location = ([np.asarray([0.52413815, # x
                                         -0.05815484, # y 
                                         0.10330608]), # z
@@ -84,28 +86,31 @@ def dipBrushIntoWater(fa : FrankaArm):
     # 0. Stop whatever was happening before 
     fa.stop_skill()
 
+    poses = []
+
     # 1. Move franka arm to the water tray
-    fa.goto_pose(RigidTransform(rotation = water_tray_location[1], 
+    poses.append(RigidTransform(rotation = water_tray_location[1], 
                                 translation = water_tray_location[0] + np.asarray([0, 0, -dip_height]),
                                 from_frame='franka_tool', 
-                                to_frame='world'), 
-                duration = 5)
+                                to_frame='world'))
 
     # 2. Dip the brush into the water at a tilt and translate in the x direction
-    fa.goto_pose(RigidTransform(rotation = water_tray_location[1], 
+    poses.append(RigidTransform(rotation = water_tray_location[1], 
                                 translation = water_tray_location[0] + np.asarray([water_tray_dims[0], water_tray_dims[1], dip_height]),
                                 from_frame='franka_tool', 
-                                to_frame='world'), 
-                duration = 5)
+                                to_frame='world'))
+    for pose in poses:
+        fa.goto_pose(pose)
+        
+
+    
+
 
     # 3. Rotate 360 degrees about z axis 
 
     # 4. Move out of the water tray with brush touching the wall - (stretch goal)
     
-
     # TODO enable the publisher API by making last goto pose the following command
-
-    
     fa.goto_pose(prev_pose, 
                  duration=int(ts[-1]), 
                  dynamic=True, 
@@ -138,7 +143,8 @@ if __name__ == "__main__":
     x_ini = 0.15
     y_ini = -0.05
     # z_ini = 0.375
-    z_ini = 0.375
+    # z_ini = 0.3625 
+    z_ini = 0.3
     x_factor = 0.1
     y_factor = 0.1
     
@@ -154,11 +160,21 @@ if __name__ == "__main__":
     p0 = fa.get_pose()
     p1 = p0.copy()
   
+
+    print(p1)
+    
+    pass
+    #---------------------------------------------------
+
     # Store the initial pose
     init = np.array([x_ini, y_ini, z_ini])
 
     dipBrushIntoWater(fa)
+    fa.reset_joints()
+
     pass
+
+    #---------------------------------------------------
 
     # From a local file load the timestamps and the offsets
     p = getPixelXY('apple.pkl')
@@ -238,7 +254,7 @@ if __name__ == "__main__":
 
         # TODO figure out a better way to compute Z - rather than trial and error to find correct Z offset
         # Append the Z offset to so that the brush touches the board.
-        translation.append(pose_traj[0].translation[2] - 0.0125)
+        translation.append(pose_traj[0].translation[2])
         
         # Publish the pose on the ros topic
         # print(fa.get_pose().translation)
