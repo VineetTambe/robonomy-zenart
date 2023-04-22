@@ -17,36 +17,106 @@ from frankapy import FrankaConstants as FC
 from frankapy.proto_utils import sensor_proto2ros_msg, make_sensor_group_msg
 from frankapy.proto import PosePositionSensorMessage, ShouldTerminateSensorMessage
 from franka_interface_msgs.msg import SensorDataGroup
-
+import datetime
 from frankapy.utils import convert_array_to_rigid_transform
-
+import time
 data_dir = '../data/processed'
 
 import matplotlib.pyplot as plt
 
 
-def getCircle(r = 10):
+def getClockXY(r):
     deltas = []
     # deltas.append(np.array([0, 0, 0]))
-    theta = np.linspace(0, np.pi * 2, 10)
+    theta = np.linspace(0, np.pi * 2, 100)
     
-    x = r * np.sin(theta)
-    y = r * np.cos(theta)
-    path = list(zip(x, y))
+    x = r * np.sin(theta) 
+    y = r * np.cos(theta) 
+    z = np.zeros_like(x)
+    path = list(zip(x, y, z))
     for p in path:
-        print(p.shape)
-        p = p/8
-        mask = (p[:,0]<1) & (p[:,1]<1)
-        p = p[mask][::2]
-        print(p)
-        if (len(p)>0):
-            deltas.append(p)
-            # deltas.append(p[0])
-            # deltas.append(p[-1])
+        deltas.append(p)
+
+    # following lines for the clock arms
+
+    xi, yi, zi = np.array(deltas[-1]) - 0.001
+    xf, yf, zf = 0.0, 0.0, zi - 0.05
+
+    moveUpx = np.linspace(xi, xf, 10)
+    moveUpy = np.linspace(yi, yf, 10)
+    moveUpz = np.linspace(zi, zf, 10)
+    print(np.vstack([moveUpx, moveUpy, moveUpz]).T.shape)
+    deltas += list(np.vstack([moveUpx, moveUpy, moveUpz]).T)
+    shape = moveUpx.shape
+    deltas += list(np.vstack([np.random.randn(*shape) * 1e-10, np.random.randn(*shape) * 1e-10, moveUpz[::-1] + 0.001]).T)
+
+    now = datetime.datetime.now()
+
+    hour = now.hour % 12
+    minute = now.minute % 60
+    hourAngle = (2 * np.pi * hour / 12  + (minute / 60) * (2 * np.pi/12)) - np.pi
+    for i in np.linspace(0, r * 0.5, 10): 
+        arm1x = i * np.cos(hourAngle)
+        arm1y = i * np.sin(hourAngle)
+        arm1z = 0.0
+        deltas.append([arm1x, arm1y, arm1z])
+
+
+    # # trajectory that lifts and goes to center
+    xi, yi, zi = np.array(deltas[-1]) - 0.001
+    xf, yf, zf = 0.0, 0.0, zi - 0.05
+
+
+
+    moveUpx = np.linspace(xi, xf, 10)
+    moveUpy = np.linspace(yi, yf, 10)
+    moveUpz = np.linspace(zi, zf, 10)
+    print(np.vstack([moveUpx, moveUpy, moveUpz]).T.shape)
+    deltas += list(np.vstack([moveUpx, moveUpy, moveUpz]).T)
+    shape = moveUpx.shape
+    deltas += list(np.vstack([np.random.randn(*shape) * 1e-10, np.random.randn(*shape) * 1e-10, moveUpz[::-1] + 0.001]).T)
+
+
+
+    # print(hour, minute)
+
+
+    minuteAngle = (minute * 2 * np.pi / 60) - np.pi
+    # minuteAngle = 0
+
+    for i in np.linspace(0, r*0.85, 10): 
+        arm1x = i * np.cos(minuteAngle)
+        arm1y = i * np.sin(minuteAngle)
+        arm1z = 0.0
+        deltas.append([arm1x, arm1y, arm1z])
+
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    p = np.vstack(deltas)
+    ax.scatter(p[:, 0], p[:, 1], p[:, 2])
+    # plt.axis('equal')
+    # plt.show()
+    return p
+
+
+def getCircleXY(r = 0.05):
+    deltas = []
     # deltas.append(np.array([0, 0, 0]))
+    theta = np.linspace(0, np.pi * 2, 100)
+    
+    x = r * np.sin(theta) 
+    y = r * np.cos(theta) 
+    z = np.zeros_like(x)
+    path = list(zip(x, y, z))
+    for p in path:
+        deltas.append(p)
     p = np.vstack(deltas)
     p[:,2]=0
     print(p)
+    plt.scatter(p[:, 0], p[:, 1])
+    plt.show()
     return p
 
 
@@ -167,11 +237,12 @@ if __name__ == "__main__":
 
     # ------------------------------
 
-    pose_traj = []
+    
    
-    x_ini = 0.15
+    x_ini = 0.3
     y_ini = -0.05
     z_ini = 0.3825
+    # z_ini = 0.215
     x_factor = 0.1
     y_factor = 0.1
     
@@ -182,10 +253,11 @@ if __name__ == "__main__":
     
     # Step1. reset arm to fixed position. 
     fa.reset_joints()
-
-    # Get initial pose
     p0 = fa.get_pose()
     p1 = p0.copy()
+
+    # Get initial pose
+    
   
 
     # print(p1)
@@ -199,122 +271,129 @@ if __name__ == "__main__":
     # # Store the initial pose
     init = np.array([x_ini, y_ini, z_ini])
 
-    dipBrushIntoWater(fa, ts)
-    # fa.reset_joints()
-
-
-    # #---------------------------------------------------
-
-    # From a local file load the timestamps and the offsets
-    p = getPixelXY('apple.pkl')
-
-    # for every pixel point convert it to a set of translations and rotations to generate a list of poses
-    for d in p:
-        print(d)
-        print(d.shape)
-        T_delta = RigidTransform(
-        translation=init + d,
-        rotation=RigidTransform.z_axis_rotation(np.deg2rad(0)), 
-                            from_frame=p1.from_frame, to_frame=p1.from_frame)
-        p1 = p0*T_delta
-        pose_traj.append(p1)
-
-    # Initialize ros publisher to publish pose
     pub = rospy.Publisher(FC.DEFAULT_SENSOR_PUBLISHER_TOPIC, SensorDataGroup, queue_size=10)
-    
-    init_time = rospy.Time.now().to_time()
-    pose_traj = np.array(pose_traj)
-
-    
-    # Go to an initial pose - this is required to initialiize the set topic by pose API
-    print(pose_traj[0])
-    print(pose_traj[1])
-
-    fa.goto_pose(pose_traj[0], duration = 5)
-    fa.goto_pose(pose_traj[1], duration = 5, use_impedance=False, cartesian_impedances=[600.0, 600.0, 3000.0, 100.0, 100.0, 100.0])
-    fa.goto_pose((pose_traj[1]), 
-                 duration=int(ts[-1]), 
-                 dynamic=True, 
-                 buffer_time=10, 
-                 use_impedance=True,
-                #  cartesian_impedances=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0]
-                cartesian_impedances=[1500.0, 1500.0, 3000.0, 100.0, 100.0, 100.0]
-    )
-
-    pts = []
-    xs = []
-    ys = []
-    zs = []
-
-    # For every Pose 
-    for pt in (pose_traj):
-        xs.append(pt.translation[0])        
-        ys.append(pt.translation[1])       
-        zs.append(pt.translation[2])       
-        pts.append(pt.translation[:2]) # X and Y coordinates to compute the distance 
-    points = np.array(pts)
-
-    distance = np.cumsum( np.sqrt(np.sum( np.diff(points, axis=0)**2, axis=1 )))
-    distance = np.insert(distance, 0, 0)/distance[-1]
-
-    # Interpolation for different methods:
-    interpolations_methods = ['slinear', 'quadratic', 'cubic']
-    
-    alpha = np.linspace(0, 1, len(ts))
-    
-    # Interpolate the points to get a smooth trajectory
-    interpolated_points = {}
-    for method in interpolations_methods:
-        interpolator =  interp1d(distance, points, kind=method, axis=0)
-        interpolated_points[method] = interpolator(alpha)
-
-    print(interpolated_points['cubic'])
-
-    # Plot the results
-    plt.figure(figsize=(7,7))
-    for method_name, curve in interpolated_points.items():
-        plt.plot(*curve.T, '-', label=method_name)
-
-    plt.plot(*points.T, 'ok', label='original points')
-    plt.axis('equal'); plt.legend(); plt.xlabel('x'); plt.ylabel('y');
-    # plt.show()
-    print(len(interpolated_points['cubic']), len(pts))
-
-    # Publish the trajectory
-    for i, t in enumerate(ts):
-        translation =  list(interpolated_points['cubic'][i])
-
-        # TODO figure out a better way to compute Z - rather than trial and error to find correct Z offset
-        # Append the Z offset to so that the brush touches the board.
-        translation.append(pose_traj[1].translation[2])
+    for i in range(10):
+    # fa.reset_joints()
+        dipBrushIntoWater(fa, ts)
         
-        # Publish the pose on the ros topic
-        # print(fa.get_pose().translation)
-        pose_tf = RigidTransform(
-            rotation = pose_traj[0].rotation,
-            translation = translation
+        pose_traj = []
+        # #---------------------------------------------------
+
+        # From a local file load the timestamps and the offsets
+        # p = getPixelXY('apple.pkl')
+        p = getClockXY(r = 0.075)
+        # p = getCircleXY(r = 0.05)
+
+        # for every pixel point convert it to a set of translations and rotations to generate a list of poses
+        for d in p:
+            print(d)
+            print(d.shape)
+            T_delta = RigidTransform(
+            translation=init + d,
+            rotation=RigidTransform.z_axis_rotation(np.deg2rad(0)), 
+                                from_frame=p1.from_frame, to_frame=p1.from_frame)
+            p1 = p0*T_delta
+            pose_traj.append(p1)
+
+        # Initialize ros publisher to publish pose
+        
+        
+        init_time = rospy.Time.now().to_time()
+        pose_traj = np.array(pose_traj)
+
+        
+        # Go to an initial pose - this is required to initialiize the set topic by pose API
+        print(pose_traj[0])
+        print(pose_traj[1])
+
+        fa.goto_pose(pose_traj[0], duration = 5)
+        fa.goto_pose(pose_traj[1], duration = 5, use_impedance=False, cartesian_impedances=[600.0, 600.0, 3000.0, 100.0, 100.0, 100.0])
+        fa.goto_pose((pose_traj[1]), 
+                    duration=int(ts[-1]), 
+                    dynamic=True, 
+                    buffer_time=10, 
+                    use_impedance=True,
+                    #  cartesian_impedances=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0]
+                    cartesian_impedances=[1500.0, 1500.0, 3000.0, 100.0, 100.0, 100.0]
         )
 
-        timestamp = rospy.Time.now().to_time() - init_time
-        traj_gen_proto_msg = PosePositionSensorMessage(
-            id=i, 
-            timestamp=timestamp,
-            position=pose_tf.translation, 
-            quaternion=pose_tf.quaternion
-		)
-        print(np.array(fa.get_pose().translation), translation)
-        # print(np.array(fa.get_pose().translation - traj_gen_proto_msg.position))
-        ros_msg = make_sensor_group_msg(
-            trajectory_generator_sensor_msg=sensor_proto2ros_msg(
-                traj_gen_proto_msg, 
-                SensorDataMessageType.POSE_POSITION),
-        )
+        pts = []
+        xs = []
+        ys = []
+        zs = []
 
-        # print(traj_gen_proto_msg.position, i)
-        # Sleep the same amount as the trajectory was recorded in
-        # rospy.loginfo('Publishing: ID {}, dt: {:.4f}'.format(traj_gen_proto_msg.id, dt))
-        pub.publish(ros_msg)
-        time.sleep(dt)
+        # For every Pose 
+        for pt in (pose_traj):
+            xs.append(pt.translation[0])        
+            ys.append(pt.translation[1])       
+            zs.append(pt.translation[2])       
+            pts.append(pt.translation[:3]) # X and Y coordinates to compute the distance 
+        points = np.array(pts)
 
-    fa.stop_skill()
-    fa.reset_joints() 
+        distance = np.cumsum( np.sqrt(np.sum( np.diff(points, axis=0)**2, axis=1 )))
+        distance = np.insert(distance, 0, 0)/distance[-1]
+        print(distance)
+
+        # Interpolation for different methods:
+        interpolations_methods = ['slinear', 'quadratic', 'cubic']
+        
+        alpha = np.linspace(0, 1, len(ts))
+        
+        # Interpolate the points to get a smooth trajectory
+        interpolated_points = {}
+        for method in interpolations_methods:
+            interpolator =  interp1d(distance, points, kind=method, axis=0)
+            interpolated_points[method] = interpolator(alpha)
+
+        print(interpolated_points['cubic'])
+
+        # Plot the results
+        plt.figure(figsize=(7,7))
+        for method_name, curve in interpolated_points.items():
+            plt.plot(*curve.T, '-', label=method_name)
+
+        plt.plot(*points.T, 'ok', label='original points')
+        plt.axis('equal'); plt.legend(); plt.xlabel('x'); plt.ylabel('y');
+        # plt.show()
+        print(len(interpolated_points['cubic']), len(pts))
+
+        # Publish the trajectory
+        for i, t in enumerate(ts):
+            translation =  list(interpolated_points['cubic'][i])
+
+            # TODO figure out a better way to compute Z - rather than trial and error to find correct Z offset
+            # Append the Z offset to so that the brush touches the board.
+
+            # translation.append(pose_traj[1].translation[2])
+            
+            # Publish the pose on the ros topic
+            # print(fa.get_pose().translation)
+            pose_tf = RigidTransform(
+                rotation = pose_traj[0].rotation,
+                translation = translation
+            )
+
+            timestamp = rospy.Time.now().to_time() - init_time
+            traj_gen_proto_msg = PosePositionSensorMessage(
+                id=i, 
+                timestamp=timestamp,
+                position=pose_tf.translation, 
+                quaternion=pose_tf.quaternion
+            )
+            print(np.array(fa.get_pose().translation), translation)
+            # print(np.array(fa.get_pose().translation - traj_gen_proto_msg.position))
+            ros_msg = make_sensor_group_msg(
+                trajectory_generator_sensor_msg=sensor_proto2ros_msg(
+                    traj_gen_proto_msg, 
+                    SensorDataMessageType.POSE_POSITION),
+            )
+
+            # print(traj_gen_proto_msg.position, i)
+            # Sleep the same amount as the trajectory was recorded in
+            # rospy.loginfo('Publishing: ID {}, dt: {:.4f}'.format(traj_gen_proto_msg.id, dt))
+            pub.publish(ros_msg)
+            time.sleep(dt)
+
+        fa.stop_skill()
+        fa.reset_joints() 
+        # time.sleep(10)
