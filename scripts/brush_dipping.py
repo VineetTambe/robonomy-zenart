@@ -25,6 +25,31 @@ data_dir = '../data/processed'
 import matplotlib.pyplot as plt
 
 
+def getCircle(r = 10):
+    deltas = []
+    # deltas.append(np.array([0, 0, 0]))
+    theta = np.linspace(0, np.pi * 2, 10)
+    
+    x = r * np.sin(theta)
+    y = r * np.cos(theta)
+    path = list(zip(x, y))
+    for p in path:
+        print(p.shape)
+        p = p/8
+        mask = (p[:,0]<1) & (p[:,1]<1)
+        p = p[mask][::2]
+        print(p)
+        if (len(p)>0):
+            deltas.append(p)
+            # deltas.append(p[0])
+            # deltas.append(p[-1])
+    # deltas.append(np.array([0, 0, 0]))
+    p = np.vstack(deltas)
+    p[:,2]=0
+    print(p)
+    return p
+
+
 def getPixelXY(file_name):
 
     with open(os.path.join(data_dir, file_name), 'rb') as f:
@@ -146,7 +171,7 @@ if __name__ == "__main__":
    
     x_ini = 0.15
     y_ini = -0.05
-    z_ini = 0.375
+    z_ini = 0.3825
     x_factor = 0.1
     y_factor = 0.1
     
@@ -165,7 +190,7 @@ if __name__ == "__main__":
 
     # print(p1)
     dt = 0.02
-    trajectory_duration = 30
+    trajectory_duration = 20
     # This param determines the speed with which the robot will complete the trajectory
     ts = np.arange(0, trajectory_duration, dt)
     
@@ -177,7 +202,6 @@ if __name__ == "__main__":
     dipBrushIntoWater(fa, ts)
     # fa.reset_joints()
 
-    # pass
 
     # #---------------------------------------------------
 
@@ -203,12 +227,18 @@ if __name__ == "__main__":
 
     
     # Go to an initial pose - this is required to initialiize the set topic by pose API
+    print(pose_traj[0])
+    print(pose_traj[1])
+
     fa.goto_pose(pose_traj[0], duration = 5)
+    fa.goto_pose(pose_traj[1], duration = 5, use_impedance=False, cartesian_impedances=[600.0, 600.0, 3000.0, 100.0, 100.0, 100.0])
     fa.goto_pose((pose_traj[1]), 
                  duration=int(ts[-1]), 
                  dynamic=True, 
                  buffer_time=10, 
-                 cartesian_impedances=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0]
+                 use_impedance=True,
+                #  cartesian_impedances=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0]
+                cartesian_impedances=[1500.0, 1500.0, 3000.0, 100.0, 100.0, 100.0]
     )
 
     pts = []
@@ -256,7 +286,7 @@ if __name__ == "__main__":
 
         # TODO figure out a better way to compute Z - rather than trial and error to find correct Z offset
         # Append the Z offset to so that the brush touches the board.
-        translation.append(pose_traj[0].translation[2] - 0.0135)
+        translation.append(pose_traj[1].translation[2])
         
         # Publish the pose on the ros topic
         # print(fa.get_pose().translation)
@@ -286,4 +316,5 @@ if __name__ == "__main__":
         pub.publish(ros_msg)
         time.sleep(dt)
 
-    fa.reset_joints()
+    fa.stop_skill()
+    fa.reset_joints() 
