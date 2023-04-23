@@ -144,8 +144,11 @@ def getPixelXY(file_name):
     # deltas.append(np.array([0, 0, 0]))
     p = np.vstack(deltas)
     p[:,2]=0
-    print(p)
-    return p
+    p2 = np.zeros_like(p)
+    p2[:,0] = p[:,1]
+    p2[:,1] = p[:,0]
+    print(p2)
+    return p2
 
 
 # TODO
@@ -264,7 +267,7 @@ if __name__ == "__main__":
 
     # print(p1)
     dt = 0.02
-    trajectory_duration = 30
+    trajectory_duration = 20
     # This param determines the speed with which the robot will complete the trajectory
     ts = np.arange(0, trajectory_duration, dt)
     
@@ -285,7 +288,7 @@ if __name__ == "__main__":
     # #---------------------------------------------------
 
     # From a local file load the timestamps and the offsets
-    p = getPixelXY('data.pkl')
+    p = getPixelXY('data2.pkl')
     # p = getClockXY(r = 0.075, index = index)
     index = index +1
     # p = getCircleXY(r = 0.05)
@@ -317,7 +320,7 @@ if __name__ == "__main__":
     fa.goto_pose((pose_traj[1]), 
                 duration=int(ts[-1]), 
                 dynamic=True, 
-                buffer_time=10, 
+                buffer_time=40, 
                 use_impedance=True,
                 #  cartesian_impedances=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0]
                 cartesian_impedances=[1500.0, 1500.0, 3000.0, 100.0, 100.0, 100.0]

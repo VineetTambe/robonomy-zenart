@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 def euclidianDist(x1,y1,x2,y2):
     return np.sqrt((x2-x1)**2 + (y2-y1)**2)
 
-def getTraj(file_name, x_max, y_max, x_min, y_min):
+def getTraj(file_name, x_scale = 0.5, y_scale = 0.5):
     coordgraph = open(os.path.join(data_dir , "XYfiles", file_name), 'r')
 
     dist_threshold = 3.0
@@ -72,10 +72,8 @@ def getTraj(file_name, x_max, y_max, x_min, y_min):
             z_final.append(z_height)
     deltas = []
     
-    x_scale = (x_max - x_min) / (np.max(x_final) - np.min(x_final))
-    x_final = [(x * x_scale) + x_min for x in x_final]
-    y_scale = (y_max - y_min) / (np.max(y_final) - np.min(y_final))
-    y_final = [(y * y_scale) + y_min for y in y_final]
+    x_final = [((x - np.min(x_final)) / (np.max(x_final) - np.min(x_final))) * x_scale for x in x_final]
+    y_final = [((y - np.min(y_final)) / (np.max(y_final) - np.min(y_final))) * y_scale for y in y_final]
 
     path = list(zip(x_final, y_final, z_final))
     for p in path:
@@ -87,6 +85,8 @@ def getTraj(file_name, x_max, y_max, x_min, y_min):
     p = np.vstack(deltas)
 
     ax.scatter(p[:, 0], p[:, 1], p[:, 2])
+    
+    print(p[:-5,:])
     
     # ax.scatter(x_diff, y_diff, z_diff, c='r', marker='o')
     # print(x_diff)
@@ -354,15 +354,16 @@ if __name__ == "__main__":
     # p = getPixelXY('apple.pkl')
     # p = getClockXY(r = 0.075)
     # p = getCircleXY(r = 0.05)
-    p = getTraj("hut.dot",x_max = 0.25, y_max = 0.25,x_min = 0.0, y_min = 0.0)
+    p = getTraj("hut.dot", x_scale = 0.5, y_scale = 0.5)
+
     # ts = np.linspace(0,trajectory_duration,p.shape[0])
     # Debug operatio REMOVE this
-    # p = p[:5]
+    
 
     # for every pixel point convert it to a set of translations and rotations to generate a list of poses
     for d in p:
-        print(d)
-        print(d.shape)
+        # print(d)
+        # print(d.shape)
         T_delta = RigidTransform(
         translation=init + d,
         rotation=RigidTransform.z_axis_rotation(np.deg2rad(0)), 
@@ -470,7 +471,7 @@ if __name__ == "__main__":
         # print(traj_gen_proto_msg.position, i)
         # Sleep the same amount as the trajectory was recorded in
         # rospy.loginfo('Publishing: ID {}, dt: {:.4f}'.format(traj_gen_proto_msg.id, dt))
-        pub.publish(ros_msg)
+        # pub.publish(ros_msg)
         time.sleep(dt)
 
     fa.stop_skill()
