@@ -54,11 +54,11 @@ def getTraj(file_name, x_scale = 0.5, y_scale = 0.5):
     y_diff = []
     z_diff = []
 
-    for i in range(0,len(xarr)-1, 3):
+    for i in range(0,len(xarr)-1, 2):
         dist = euclidianDist(xarr[i],yarr[i],xarr[i+1],yarr[i+1])
         if dist > dist_threshold:
-            x_interpolate = np.linspace(xarr[i],xarr[i+1],50)
-            y_interpolate = np.linspace(yarr[i],yarr[i+1],50)
+            x_interpolate = np.linspace(xarr[i] + 1e-3,xarr[i+1] - 1e-3,50)
+            y_interpolate = np.linspace(yarr[i] + 1e-3,yarr[i+1] - 1e-3,50)
 
             x = np.linspace(-dist/2, dist/2, 50)
             y = -x**2 
@@ -87,86 +87,84 @@ def getTraj(file_name, x_scale = 0.5, y_scale = 0.5):
     ax.scatter(p[:, 0], p[:, 1], p[:, 2])
     
     print(p[:-5,:])
-    
-    # ax.scatter(x_diff, y_diff, z_diff, c='r', marker='o')
-    # print(x_diff)
-    # plt.axis('equal')
+
     plt.show()
     return p
 
-# def getClockXY(r):
-#     deltas = []
-#     # deltas.append(np.array([0, 0, 0]))
-#     theta = np.linspace(0, np.pi * 2, 100)
+def getClockXY(r):
+    deltas = []
+    # deltas.append(np.array([0, 0, 0]))
+    theta = np.linspace(0, np.pi * 2, 100)
     
-#     x = r * np.sin(theta) 
-#     y = r * np.cos(theta) 
-#     z = np.zeros_like(x)
-#     path = list(zip(x, y, z))
-#     for p in path:
-#         deltas.append(p)
+    x = r * np.sin(theta) 
+    y = r * np.cos(theta) 
+    z = np.zeros_like(x)
+    path = list(zip(x, y, z))
+    for p in path:
+        deltas.append(p)
 
-#     # following lines for the clock arms
+    # following lines for the clock arms
 
-#     xi, yi, zi = np.array(deltas[-1]) - 0.001
-#     xf, yf, zf = 0.0, 0.0, zi - 0.05
+    xi, yi, zi = np.array(deltas[-1]) - 0.001
+    xf, yf, zf = 0.0, 0.0, zi - 0.05
 
-#     moveUpx = np.linspace(xi, xf, 10)    z_pick_height = 0.05
-#     z_safety_offset = 0.01
-#     z_height = 0.0pe)
-#     deltas += list(np.vstack([moveUpx, moveUpy, moveUpz]).T)
-#     shape = moveUpx.shape
-#     deltas += list(np.vstack([np.random.randn(*shape) * 1e-10, np.random.randn(*shape) * 1e-10, moveUpz[::-1] + 0.001]).T)
+    moveUpx = np.linspace(xi, xf, 10)    
+    z_pick_height = 0.05
+    z_safety_offset = 0.01
+    z_height = 0.0
+    deltas += list(np.vstack([moveUpx, moveUpy, moveUpz]).T)
+    shape = moveUpx.shape
+    deltas += list(np.vstack([np.random.randn(*shape) * 1e-10, np.random.randn(*shape) * 1e-10, moveUpz[::-1] + 0.001]).T)
 
-#     now = datetime.datetime.now()
+    now = datetime.datetime.now()
 
-#     hour = now.hour % 12
-#     minute = now.minute % 60
-#     hourAngle = (2 * np.pi * hour / 12  + (minute / 60) * (2 * np.pi/12)) - np.pi
-#     for i in np.linspace(0, r * 0.5, 10): 
-#         arm1x = i * np.cos(hourAngle)
-#         arm1y = i * np.sin(hourAngle)
-#         arm1z = 0.0
-#         deltas.append([arm1x, arm1y, arm1z])
-
-
-#     # # trajectory that lifts and goes to center
-#     xi, yi, zi = np.array(deltas[-1]) - 0.001
-#     xf, yf, zf = 0.0, 0.0, zi - 0.05
+    hour = now.hour % 12
+    minute = now.minute % 60
+    hourAngle = (2 * np.pi * hour / 12  + (minute / 60) * (2 * np.pi/12)) - np.pi
+    for i in np.linspace(0, r * 0.5, 10): 
+        arm1x = i * np.cos(hourAngle)
+        arm1y = i * np.sin(hourAngle)
+        arm1z = 0.0
+        deltas.append([arm1x, arm1y, arm1z])
 
 
-
-#     moveUpx = np.linspace(xi, xf, 10)
-#     moveUpy = np.linspace(yi, yf, 10)
-#     moveUpz = np.linspace(zi, zf, 10)
-#     print(np.vstack([moveUpx, moveUpy, moveUpz]).T.shape)
-#     deltas += list(np.vstack([moveUpx, moveUpy, moveUpz]).T)
-#     shape = moveUpx.shape
-#     deltas += list(np.vstack([np.random.randn(*shape) * 1e-10, np.random.randn(*shape) * 1e-10, moveUpz[::-1] + 0.001]).T)
+    # # trajectory that lifts and goes to center
+    xi, yi, zi = np.array(deltas[-1]) - 0.001
+    xf, yf, zf = 0.0, 0.0, zi - 0.05
 
 
 
-#     # print(hour, minute)
+    moveUpx = np.linspace(xi, xf, 10)
+    moveUpy = np.linspace(yi, yf, 10)
+    moveUpz = np.linspace(zi, zf, 10)
+    print(np.vstack([moveUpx, moveUpy, moveUpz]).T.shape)
+    deltas += list(np.vstack([moveUpx, moveUpy, moveUpz]).T)
+    shape = moveUpx.shape
+    deltas += list(np.vstack([np.random.randn(*shape) * 1e-10, np.random.randn(*shape) * 1e-10, moveUpz[::-1] + 0.001]).T)
 
 
-#     minuteAngle = (minute * 2 * np.pi / 60) - np.pi
-#     # minuteAngle = 0
 
-#     for i in np.linspace(0, r*0.85, 10): 
-#         arm1x = i * np.cos(minuteAngle)
-#         arm1y = i * np.sin(minuteAngle)
-#         arm1z = 0.0
-#         deltas.append([arm1x, arm1y, arm1z])
+    # print(hour, minute)
 
 
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111, projection='3d')
+    minuteAngle = (minute * 2 * np.pi / 60) - np.pi
+    # minuteAngle = 0
 
-#     p = np.vstack(deltas)
-#     ax.scatter(p[:, 0], p[:, 1], p[:, 2])
-#     # plt.axis('equal')
-#     # plt.show()
-#     return p
+    for i in np.linspace(0, r*0.85, 10): 
+        arm1x = i * np.cos(minuteAngle)
+        arm1y = i * np.sin(minuteAngle)
+        arm1z = 0.0
+        deltas.append([arm1x, arm1y, arm1z])
+
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    p = np.vstack(deltas)
+    ax.scatter(p[:, 0], p[:, 1], p[:, 2])
+    # plt.axis('equal')
+    # plt.show()
+    return p
 
 
 def getCircleXY(r = 0.05):
@@ -308,10 +306,10 @@ if __name__ == "__main__":
 
     
    
-    x_ini = 0.0
+    x_ini = 0.15
     y_ini = -0.05
-    # z_ini = 0.3825
-    z_ini = 0.215 # this is the debug z
+    z_ini = 0.3825
+    # z_ini = 0.215 # this is the debug z
     x_factor = 0.1
     y_factor = 0.1
     
@@ -331,7 +329,7 @@ if __name__ == "__main__":
 
     # print(p1)
     dt = 0.02
-    trajectory_duration = 20
+    trajectory_duration = 100
     # This param determines the speed with which the robot will complete the trajectory
     ts = np.arange(0, trajectory_duration, dt)
 
@@ -354,7 +352,7 @@ if __name__ == "__main__":
     # p = getPixelXY('apple.pkl')
     # p = getClockXY(r = 0.075)
     # p = getCircleXY(r = 0.05)
-    p = getTraj("hut.dot", x_scale = 0.5, y_scale = 0.5)
+    p = getTraj("flower_simple.dot", x_scale = 0.1, y_scale = 0.1)
 
     # ts = np.linspace(0,trajectory_duration,p.shape[0])
     # Debug operatio REMOVE this
@@ -377,25 +375,12 @@ if __name__ == "__main__":
 
     init_time = rospy.Time.now().to_time()
     pose_traj = np.array(pose_traj)
-    print("-" * 20)
-    for pt in (pose_traj):
-        print(pt.translation)
-    print("-" * 20)
+    # print("-" * 20)
+    # for pt in (pose_traj):
+    #     print(pt.translation)
+    # print("-" * 20)
     # Go to an initial pose - this is required to initialiize the set topic by pose API
-    print(pose_traj[0])
-    print(pose_traj[1])
-
-    fa.goto_pose(pose_traj[0], duration = 5)
-    fa.goto_pose(pose_traj[1], duration = 5, use_impedance=False, cartesian_impedances=[600.0, 600.0, 3000.0, 100.0, 100.0, 100.0])
-    fa.goto_pose((pose_traj[1]), 
-                duration=int(ts[-1]), 
-                dynamic=True, 
-                buffer_time=10, 
-                use_impedance=True,
-                #  cartesian_impedances=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0]
-                cartesian_impedances=[1500.0, 1500.0, 3000.0, 100.0, 100.0, 100.0]
-    )
-
+    
     pts = []
     xs = []
     ys = []
@@ -437,9 +422,27 @@ if __name__ == "__main__":
     plt.show()
     print(len(interpolated_points['cubic']), len(pts))
 
+    print(pose_traj[0])
+    print(pose_traj[1])
+
+    fa.goto_pose(pose_traj[0], duration = 5)
+    fa.goto_pose(pose_traj[1], duration = 5, use_impedance=False, cartesian_impedances=[600.0, 600.0, 3000.0, 100.0, 100.0, 100.0])
+    fa.goto_pose((pose_traj[1]), 
+                duration=int(ts[-1]), 
+                dynamic=True, 
+                buffer_time=10, 
+                use_impedance=True,
+                #  cartesian_impedances=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0]
+                cartesian_impedances=[1500.0, 1500.0, 3000.0, 100.0, 100.0, 100.0]
+    )
+
     # Publish the trajectory
     for i, t in enumerate(ts):
         # translation =  list(interpolated_points['cubic'][i])
+
+        # if i == 100:
+        #     break
+
         translation =  list(interpolated_points['cubic'][i])
         # TODO figure out a better way to compute Z - rather than trial and error to find correct Z offset
         # Append the Z offset to so that the brush touches the board.
@@ -470,8 +473,8 @@ if __name__ == "__main__":
 
         # print(traj_gen_proto_msg.position, i)
         # Sleep the same amount as the trajectory was recorded in
-        # rospy.loginfo('Publishing: ID {}, dt: {:.4f}'.format(traj_gen_proto_msg.id, dt))
-        # pub.publish(ros_msg)
+        rospy.loginfo('Publishing: ID {}, dt: {:.4f}'.format(traj_gen_proto_msg.id, dt))
+        pub.publish(ros_msg)
         time.sleep(dt)
 
     fa.stop_skill()
