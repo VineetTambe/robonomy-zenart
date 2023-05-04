@@ -63,6 +63,7 @@ To get this to run it requires some interpolation for which we use cubic interrp
 In addition to the above we had to develope a brush dipping strategy to keep the brush moist enough but not have water accumulate at the tip:
 
 ![brush_dipping](/gifs/brush_dipping.gif?raw=true "brush_dipping")
+
 The source code for this example can be found in
 `/scripts/brush_dipping.py`
 
