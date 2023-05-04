@@ -21,6 +21,7 @@ We have 4 different methods implemented:
 ### 1. QuickDraw
 
 We use the timestaped trajectories available in the quick draw dataset and transform it to the robot frame to get a drawing.
+
 ![Quick draw apple](/gifs/quick_draw_apple.gif?raw=true "Quick draw apple")
 
 The source code for this example can be found in
@@ -60,6 +61,7 @@ To get this to run it requires some interpolation for which we use cubic interrp
 ![ri logo traj](/images/RI_logo_traj.png?raw=true "ri logo traj")
 
 In addition to the above we had to develope a brush dipping strategy to keep the brush moist enough but not have water accumulate at the tip:
+
 ![brush_dipping](/gifs/brush_dipping.gif?raw=true "brush_dipping")
 The source code for this example can be found in
 `/scripts/brush_dipping.py`
