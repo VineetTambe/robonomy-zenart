@@ -60,6 +60,8 @@ To get this to run it requires some interpolation for which we use cubic interrp
 
 ![ri logo traj](/images/RI_logo_traj.png?raw=true "ri logo traj")
 
+### Brush dipping
+
 In addition to the above we had to develope a brush dipping strategy to keep the brush moist enough but not have water accumulate at the tip:
 
 ![brush_dipping](/gifs/brush_dipping.gif?raw=true "brush_dipping")
