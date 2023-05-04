@@ -8,6 +8,8 @@ Authors:
 
 [*Equal contribution]
 
+[YouTube Link](https://youtu.be/HAGtMbE7lBk)
+
 For artists, the traditional art of Zen can be a source of inspiration and tranquillity. This project aims to bring the essence of Zen art to life by designing and developing a robot that can create unique and beautiful Zen art pieces on a Buddha board. Robot art - specifically painting, poses an interesting challenge. Robots are not typically associated with creativity, prompting us to delve deeper into the elements of art and explore how
 this can be replicated by a robot.
 
