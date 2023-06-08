@@ -8,7 +8,7 @@ To run it simply set up move it and launch the `demo.launch` with `rviz:=true` i
 
 Variours patters can be drawn by commenting out line `339` in `moveit_code.py`
 
-Here are the video's for various examples: 
+Here are the video's for various patterns drawn on a panda arm using MoveIt! 
 1. [circle](https://drive.google.com/file/d/1_gVt7hPjdmWhkvGdYQ7WcMPs5dOxOjzD/view?usp=drive_link)
 2. [clock](https://drive.google.com/file/d/1yN-19tqKWBul4tfey2qVZp_4WvXW_RB-/view?usp=drive_link)
 3. [flower](https://drive.google.com/file/d/1F-AUqSK5NnuKxd4t8yo02xPHn4hxrPzY/view?usp=drive_link)
