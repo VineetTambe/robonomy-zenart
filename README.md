@@ -1,7 +1,21 @@
-# Robonomy-Zenart
+# Robonomy
+
+### 
+
+Note: All of the above has been implemented for the PickNik Robotics Hackathon to integrate move-it!
+The code for the move it demo can be found in `scripts/moveit_code.py`
+To run it simply set up move it and launch the `demo.launch` with `rviz:=true` in ROS1 Noetic
+
+Variours patters can be drawn by commenting out line `339` in `moveit_code.py`
+
+Here are the video's for various examples: 
+1. [circle](https://drive.google.com/file/d/1_gVt7hPjdmWhkvGdYQ7WcMPs5dOxOjzD/view?usp=drive_link)
+2. [clock](https://drive.google.com/file/d/1yN-19tqKWBul4tfey2qVZp_4WvXW_RB-/view?usp=drive_link)
+3. [flower](https://drive.google.com/file/d/1F-AUqSK5NnuKxd4t8yo02xPHn4hxrPzY/view?usp=drive_link)
+4. [RI_logo](https://drive.google.com/file/d/1PAhdPotZndl59CMaxbfJkay_zMkyUUVX/view?usp=drive_link)
+
 
 Authors:
-
 1. [Vineet Tambe](https://www.linkedin.com/in/vineet-tambe/)\*
 2. [Ronit Hire](https://www.linkedin.com/in/ronit-hire/)\*
 3. [Praveen Venkatesh](https://www.linkedin.com/in/praveenvnktsh/)\*
@@ -68,6 +82,7 @@ In addition to the above we had to develope a brush dipping strategy to keep the
 
 The source code for this example can be found in
 `/scripts/brush_dipping.py`
+
 
 <!--
 which results in something like this:
