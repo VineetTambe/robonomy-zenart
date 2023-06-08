@@ -2,7 +2,7 @@
 
 ### 
 
-Note: All of the above has been implemented for the PickNik Robotics Hackathon to integrate move-it!
+Note: All of the examples described below in the README have been implemented for the PickNik Robotics Hackathon to integrate move-it!
 The code for the move it demo can be found in `scripts/moveit_code.py`
 To run it simply set up move it and launch the `demo.launch` with `rviz:=true` in ROS1 Noetic
 
