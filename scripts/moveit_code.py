@@ -9,6 +9,11 @@ import geometry_msgs.msg
 from math import pi
 from std_msgs.msg import String
 from moveit_commander.conversions import pose_to_list
+from mpl_toolkits.mplot3d import Axes3D 
+import time
+import matplotlib.pyplot as plt
+import datetime
+
 ## END_SUB_TUTORIAL
 import numpy as np
 import os
@@ -180,13 +185,160 @@ class MoveGroupPythonIntefaceTutorial(object):
     current_pose = self.move_group.get_current_pose().pose
     return all_close(pose_goal, current_pose, 0.01)
 
+  def getClockXY(self, r):
+    deltas = []
+    # deltas.append(np.array([0, 0, 0]))
+    theta = np.linspace(0, np.pi * 2, 12)
+    
+    x = r * np.sin(theta) 
+    y = r * np.cos(theta) 
+    z = np.zeros_like(x)
+    path = list(zip(x, y, z))
+    for p in path:
+        deltas.append(p)
 
+    # following lines for the clock arms
+
+    xi, yi, zi = np.array(deltas[-1]) - 0.001
+    xf, yf, zf = 0.0, 0.0, zi + 0.05
+
+    moveUpx = np.linspace(xi, xf, 10)
+    moveUpy = np.linspace(yi, yf, 10)
+    moveUpz = np.linspace(zi, zf, 10)
+    print(np.vstack([moveUpx, moveUpy, moveUpz]).T.shape)
+    deltas += list(np.vstack([moveUpx, moveUpy, moveUpz]).T)
+    shape = moveUpx.shape
+    deltas += list(np.vstack([np.random.randn(*shape) * 1e-10, np.random.randn(*shape) * 1e-10, moveUpz[::-1] + 0.001]).T)
+
+    now = datetime.datetime.now()
+
+    hour = now.hour % 12
+    minute = now.minute % 60
+    hourAngle = (2 * np.pi * hour / 12  + (minute / 60) * (2 * np.pi/12)) - np.pi
+    for i in np.linspace(0, r * 0.5, 10): 
+        arm1x = i * np.cos(hourAngle)
+        arm1y = i * np.sin(hourAngle)
+        arm1z = 0.0
+        deltas.append([arm1x, arm1y, arm1z])
+
+
+    # # trajectory that lifts and goes to center
+    xi, yi, zi = np.array(deltas[-1]) - 0.001
+    xf, yf, zf = 0.0, 0.0, zi - 0.05
+
+
+
+    moveUpx = np.linspace(xi, xf, 10)
+    moveUpy = np.linspace(yi, yf, 10)
+    moveUpz = np.linspace(zi, zf, 10)
+    print(np.vstack([moveUpx, moveUpy, moveUpz]).T.shape)
+    deltas += list(np.vstack([moveUpx, moveUpy, moveUpz]).T)
+    shape = moveUpx.shape
+    deltas += list(np.vstack([np.random.randn(*shape) * 1e-10, np.random.randn(*shape) * 1e-10, moveUpz[::-1] + 0.001]).T)
+
+
+
+    # print(hour, minute)
+
+
+    minuteAngle = (minute * 2 * np.pi / 60) - np.pi
+    # minuteAngle = 0
+
+    for i in np.linspace(0, r*0.85, 10): 
+        arm1x = i * np.cos(minuteAngle)
+        arm1y = i * np.sin(minuteAngle)
+        arm1z = 0.0
+        deltas.append([arm1x, arm1y, arm1z])
+
+
+    fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+    # ax = fig.gca(projection='3d')
+    p = np.vstack(deltas)
+    # ax.scatter(p[:, 0], p[:, 1], p[:, 2])
+    plt.scatter(p[:, 0], p[:, 1], c ="blue")
+
+    plt.axis('equal')
+    plt.show()
+    return p
+  
+  def euclidianDist(self, x1,y1,x2,y2):
+    return np.sqrt((x2-x1)**2 + (y2-y1)**2)
+  
+  def getTraj(self, file_name, x_scale = 0.5, y_scale = 0.5):
+    data_dir = '../data'
+    coordgraph = open(os.path.join(data_dir , "XYfiles", file_name), 'r')
+
+    dist_threshold = 3.0
+
+    z_pick_height = -0.02
+    z_safety_offset = 0.0
+    z_height = 0.0
+
+    xarr = []
+    yarr = []
+    x_final = []
+    y_final = []
+    z_final = []
+
+    for line in coordgraph:
+        x,y = line.split(",")
+        xarr.append(int(x))
+        yarr.append(-int(y))
+
+    # flag = []
+
+    x_diff = []
+    y_diff = []
+    z_diff = []
+
+    for i in range(0,len(xarr)-1, 2):
+        dist = self.euclidianDist(xarr[i],yarr[i],xarr[i+1],yarr[i+1])
+        if dist > dist_threshold:
+            x_interpolate = np.linspace(xarr[i] + 1e-3,xarr[i+1] - 1e-3,50)
+            y_interpolate = np.linspace(yarr[i] + 1e-3,yarr[i+1] - 1e-3,50)
+
+            x = np.linspace(-dist/2, dist/2, 50)
+            y = -x**2 
+            z_interpolate = -(y-np.min(y))/(np.max(y)-np.min(y)) * z_pick_height - z_safety_offset
+            x_final += list(x_interpolate)
+            y_final += list(y_interpolate)
+            z_final += list(z_interpolate)
+        else:
+            x_final.append(xarr[i])
+            y_final.append(yarr[i])
+            z_final.append(z_height)
+    deltas = []
+    
+    x_final = [((x - np.min(x_final)) / (np.max(x_final) - np.min(x_final))) * x_scale for x in x_final]
+    y_final = [((y - np.min(y_final)) / (np.max(y_final) - np.min(y_final))) * y_scale for y in y_final]
+
+    path = list(zip(x_final, y_final, z_final))
+    for p in path:
+        deltas.append(p)
+
+    fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+
+    p = np.vstack(deltas)
+
+    # ax.scatter(p[:, 0], p[:, 1], p[:, 2])
+    plt.scatter(p[:, 0], -p[:, 1], c ="blue")
+    # print(p[:-5,:])
+
+    plt.show()
+    return p
+  
   def plan_cartesian_path(self, scale=1):
     # Copy class variables to local variables to make the web tutorials more clear.
     # In practice, you should use the class variables directly unless you have a good
     # reason not to.
-    with open(os.path.join('/home/student/Prog/.zenart/data/processed/', 'apple.json'), 'rb') as f:
-        path = json.load(f)
+    # with open(os.path.join('/home/student/Prog/.zenart/data/processed/', 'apple.json'), 'rb') as f:
+    #     path = json.load(f)
+    # path = self.getClockXY(r = 0.20)
+    path = self.getTraj("RI_logo2.dot", x_scale = 0.2, y_scale = 0.2)
+
+
 
     sf = 0.1
     print(len(path))
@@ -222,16 +374,22 @@ class MoveGroupPythonIntefaceTutorial(object):
     ##
     waypoints = []
 
+    print("*"*20)
+
     wpose = move_group.get_current_pose().pose
-    for stroke in path:
-        stroke = np.array(stroke)
-        stroke -= 0.5
-        stroke *= 0.5
-        for point in stroke:
-            tpose = copy.deepcopy(wpose)
-            tpose.position.y = point[1]
-            tpose.position.x = point[0] + 0.3
-            waypoints.append(tpose)
+    for point in path:
+        # stroke = np.array(stroke)
+        # for point in stroke:
+        print(point)
+
+
+        tpose = copy.deepcopy(wpose)
+        tpose.position.x = point[0] + 0.5 
+        tpose.position.y = point[1]
+        tpose.position.z = point[2] + 0.5
+        waypoints.append(tpose)
+
+    print("*"*20)
 
     # wpose.position.z -= scale * 0.1  # First move up (z)
     # wpose.position.y += scale * 0.2  # and sideways (y)
@@ -281,7 +439,7 @@ class MoveGroupPythonIntefaceTutorial(object):
     display_trajectory.trajectory_start = robot.get_current_state()
     display_trajectory.trajectory.append(plan)
     # Publish
-    display_trajectory_publisher.publish(display_trajectory);
+    display_trajectory_publisher.publish(display_trajectory)
 
     ## END_SUB_TUTORIAL
 
@@ -356,6 +514,9 @@ def main():
     cartesian_plan, fraction = tutorial.plan_cartesian_path()
     print("Displaying trajecotyr")
     tutorial.display_trajectory(cartesian_plan)
+    
+    print(type(cartesian_plan))
+    
     print("Executing path")
     tutorial.execute_plan(cartesian_plan)
   except rospy.ROSInterruptException:
