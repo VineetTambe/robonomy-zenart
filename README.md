@@ -1,27 +1,4 @@
 # Robonomy
-
-### 
-
-Note: All of the examples described below in the README have been implemented for the PickNik Robotics Hackathon to integrate move-it!
-The code for the move it demo can be found in `scripts/moveit_code.py`
-To run it simply set up move it and launch the `demo.launch` with `rviz:=true` in ROS1 Noetic
-
-Variours patters can be drawn by commenting out line `339` in `moveit_code.py`
-
-Here are the video's for various patterns drawn on a panda arm using MoveIt! 
-1. [circle](https://drive.google.com/file/d/1_gVt7hPjdmWhkvGdYQ7WcMPs5dOxOjzD/view?usp=drive_link)
-2. [clock](https://drive.google.com/file/d/1yN-19tqKWBul4tfey2qVZp_4WvXW_RB-/view?usp=drive_link)
-3. [flower](https://drive.google.com/file/d/1F-AUqSK5NnuKxd4t8yo02xPHn4hxrPzY/view?usp=drive_link)
-4. [RI_logo](https://drive.google.com/file/d/1PAhdPotZndl59CMaxbfJkay_zMkyUUVX/view?usp=drive_link)
-
-
-Authors:
-1. [Vineet Tambe](https://www.linkedin.com/in/vineet-tambe/)\*
-2. [Ronit Hire](https://www.linkedin.com/in/ronit-hire/)\*
-3. [Praveen Venkatesh](https://www.linkedin.com/in/praveenvnktsh/)\*
-
-[*Equal contribution]
-
 [YouTube Link](https://youtu.be/HAGtMbE7lBk)
 
 For artists, the traditional art of Zen can be a source of inspiration and tranquillity. This project aims to bring the essence of Zen art to life by designing and developing a robot that can create unique and beautiful Zen art pieces on a Buddha board. Robot art - specifically painting, poses an interesting challenge. Robots are not typically associated with creativity, prompting us to delve deeper into the elements of art and explore how
@@ -84,7 +61,24 @@ The source code for this example can be found in
 `/scripts/brush_dipping.py`
 
 
-<!--
-which results in something like this:
+### 
 
-![ri logo drawing](/images/ri_drawing.png?raw=true "flower") -->
+Note: All of the examples described below in the README have been implemented for the PickNik Robotics Hackathon to integrate move-it!
+The code for the move it demo can be found in `scripts/moveit_code.py`
+To run it simply set up move it and launch the `demo.launch` with `rviz:=true` in ROS1 Noetic
+
+Variours patters can be drawn by commenting out line `339` in `moveit_code.py`
+
+Here are the video's for various patterns drawn on a panda arm using MoveIt! 
+1. [circle](https://drive.google.com/file/d/1_gVt7hPjdmWhkvGdYQ7WcMPs5dOxOjzD/view?usp=drive_link)
+2. [clock](https://drive.google.com/file/d/1yN-19tqKWBul4tfey2qVZp_4WvXW_RB-/view?usp=drive_link)
+3. [flower](https://drive.google.com/file/d/1F-AUqSK5NnuKxd4t8yo02xPHn4hxrPzY/view?usp=drive_link)
+4. [RI_logo](https://drive.google.com/file/d/1PAhdPotZndl59CMaxbfJkay_zMkyUUVX/view?usp=drive_link)
+
+
+Authors:
+1. [Vineet Tambe](https://www.linkedin.com/in/vineet-tambe/)\*
+2. [Ronit Hire](https://www.linkedin.com/in/ronit-hire/)\*
+3. [Praveen Venkatesh](https://www.linkedin.com/in/praveenvnktsh/)\*
+
+[*Equal contribution]
